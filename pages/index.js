@@ -27,7 +27,7 @@ export default function Home() {
 
   const [attackList, setAttackList] = useState([]);
   const [damageList, setDamageList] = useState([]);
-  const [showForm, setShowForm] = useState(true)
+  const [showForm, setShowForm] = useState(true);
 
   useEffect(() => {
     if (!showForm) {
@@ -47,6 +47,7 @@ export default function Home() {
     let sum = 0;
     let newAttack = [];
     let successfulAttack = 0;
+    let attacks = [];
 
     for (let i = 0; i < attack.repeats; i++) {
       let attackPoint = 0;
@@ -71,18 +72,19 @@ export default function Home() {
       }
 
       if (attackPoint >= attack.armour) {
-        newAttack.push(
-          <SuccessfulAttack index={i + 1} score={attackPoint} />
-        );
+        newAttack.push(<SuccessfulAttack index={i + 1} score={attackPoint} />);
         sum += parseInt(attackPoint);
+        attacks.push(i);
         successfulAttack += 1;
       } else {
-        newAttack.push(
-          <Attack index={i + 1} score={attackPoint} />
-        );
+        newAttack.push(<Attack index={i + 1} score={attackPoint} />);
       }
     }
-    newAttack.push(<div className="mt-2">number of succesful attacks: {successfulAttack}</div>);
+    newAttack.unshift(
+      <div className="mt-2 font-bold">
+        number of succesful attacks: {successfulAttack}
+      </div>
+    );
 
     setAttackList([newAttack]);
 
@@ -108,34 +110,49 @@ export default function Home() {
     let hurt = 0;
     let newDamage = [];
     let index = 1;
+    let y = 0;
 
-    for (let i = 0; i < newRepeats; i++) {
-      hurt = getRandomInt(damage.side);
-      hurt += parseInt(damage.modifier);
-
-      for (let d in damageTypes) {
-        if (d == damage.type) {
-          damageTypes[d] += hurt;
-          total += hurt;
+    for (let i = 0; i < successfulAttack; i++) {
+      newDamage.push(
+        <p className={`w-full italic block mt-3`}>
+          damage from attack {attacks[y] + 1}:
+        </p>
+      );
+      for (let j = 0; j < damage.repeats; j++) {
+        hurt = getRandomInt(damage.side);
+        hurt += parseInt(damage.modifier);
+        for (let d in damageTypes) {
+          if (d == damage.type) {
+            damageTypes[d] += hurt;
+            newDamage.push(<Damage score={hurt} damageType={d} />);
+            total += hurt;
+          }
         }
       }
+      y += 1;
     }
 
-    for (let d in damageTypes) {
-      if (damageTypes[d] != 0) {
-        newDamage.push(
-          <Damage score={damageTypes[d]} damageType={d} />
-        );
-        index += 1;
-      }
-    }
+    // for (let d in damageTypes) {
+    //   if (damageTypes[d] != 0) {
+    //     newDamage.push(
+    //       <Damage score={damageTypes[d]} damageType={d} />
+    //     );
+    //     index += 1;
+    //   }
+    // }
 
-    setDamageList([newDamage])
-    setShowForm(false)
+    newDamage.unshift(
+      <p className={`w-full font-bold mt-2`}>
+        total damage: {total} {damage.type}
+      </p>
+    );
+
+    setDamageList([newDamage]);
+    setShowForm(false);
   }
 
   function redo() {
-    setShowForm(true)
+    setShowForm(true);
   }
 
   return (
@@ -143,7 +160,9 @@ export default function Home() {
       className={`min-h-screen items-center w-10/12 max-w-2xl m-auto justify-center align-center text-white flex`}
     >
       <div id="form">
-        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">dnd dice roller 🎲</h1>
+        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">
+          dnd dice roller 🎲
+        </h1>
 
         <div className="border w-full p-2 rounded mb-3">
           <h2 className="font-bold text-xl sm:text-3xl pb-3">attack</h2>
@@ -286,20 +305,20 @@ export default function Home() {
               onChange={(e) => setDamage({ ...damage, type: e.target.value })}
               className="bg-transparent border rounded w-full"
             >
-              <option value="none">None</option>
-              <option value="slashing">Slashing</option>
-              <option value="piercing">Piercing</option>
-              <option value="bludgeoning">Bludgeoning</option>
-              <option value="cold">Cold</option>
-              <option value="poison">Poison</option>
-              <option value="acid">Acid</option>
-              <option value="psychic">Psychic</option>
-              <option value="fire">Fire</option>
-              <option value="necrotic">Necrotic</option>
-              <option value="radiant">Radiant</option>
-              <option value="force">Force</option>
-              <option value="thunder">Thunder</option>
-              <option value="lightning">Lightning</option>
+              <option value="none">none</option>
+              <option value="slashing">slashing</option>
+              <option value="piercing">piercing</option>
+              <option value="bludgeoning">bludgeoning</option>
+              <option value="cold">cold</option>
+              <option value="poison">poison</option>
+              <option value="acid">acid</option>
+              <option value="psychic">psychic</option>
+              <option value="fire">fire</option>
+              <option value="necrotic">necrotic</option>
+              <option value="radiant">radiant</option>
+              <option value="force">force</option>
+              <option value="thunder">thunder</option>
+              <option value="lightning">lightning</option>
             </select>
           </div>
         </div>
@@ -308,20 +327,33 @@ export default function Home() {
         </button>
       </div>
       <div id="result">
-        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">results</h1>
-        <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">attacks ⚔️</h2>
-
-        {attackList.map((e, index) => (
-          <div key={index}>{e}</div>
-        ))}
-        <br />
-        <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">damage ❤️‍🩹</h2>
-        {damageList.map((e, index) => (
-          <div key={index}>{e}</div>
-        ))}
-        <button className="text-black bg-white rounded p-2 mt-3" onClick={redo}>
+        <div className="flex align-center justify-between mb-4">
+        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl">
+          results
+        </h1>
+        <button className="text-black bg-white italic rounded p-3" onClick={redo}>
           redo
         </button>
+        </div>
+        <div className="flex gap-5">
+          <div>
+            <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">
+              attacks ⚔️
+            </h2>
+
+            {attackList.map((e, index) => (
+              <div key={index}>{e}</div>
+            ))}
+          </div>
+          <div>
+            <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">
+              damage ❤️‍🩹
+            </h2>
+            {damageList.map((e, index) => (
+              <div key={index}>{e}</div>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );
