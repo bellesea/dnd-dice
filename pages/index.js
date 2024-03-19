@@ -143,7 +143,7 @@ export default function Home() {
       className={`min-h-screen items-center w-10/12 max-w-2xl m-auto justify-center align-center text-white flex`}
     >
       <div id="form">
-        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">DND Dice Roller 🎲</h1>
+        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">dnd dice roller 🎲</h1>
 
         <div className="border w-full p-2 rounded mb-3">
           <h2 className="font-bold text-xl sm:text-3xl pb-3">attack</h2>
