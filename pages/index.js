@@ -81,7 +81,7 @@ export default function Home() {
       }
     }
     newAttack.unshift(
-      <div className="mt-2 font-bold">
+      <div className="mt-2 font-bold mb-2">
         number of succesful attacks: {successfulAttack}
       </div>
     );
