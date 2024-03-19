@@ -1,117 +1,327 @@
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import { useEffect, useState } from "react";
+import Attack from "../component/Attack";
+import Damage from "../component/Damage";
+import SuccessfulAttack from "../component/SuccessfulAttack";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const [attack, setAttack] = useState({
+    repeats: 0,
+    modifier: 0,
+    advantage: false,
+    disadvantage: false,
+    bless: false,
+    bane: false,
+    armour: 0,
+  });
+
+  const [damage, setDamage] = useState({
+    repeats: 0,
+    side: 1,
+    modifier: 0,
+    type: "",
+  });
+
+  const [attackList, setAttackList] = useState([]);
+  const [damageList, setDamageList] = useState([]);
+  const [showForm, setShowForm] = useState(true)
+
+  useEffect(() => {
+    if (!showForm) {
+      document.getElementById("form").style.display = "none";
+      document.getElementById("result").style.display = "block";
+    } else {
+      document.getElementById("form").style.display = "block";
+      document.getElementById("result").style.display = "none";
+    }
+  }, [showForm]);
+
+  function getRandomInt(max) {
+    return Math.floor(Math.random() * (max - 1)) + 1;
+  }
+
+  function calculate() {
+    let sum = 0;
+    let newAttack = [];
+    let successfulAttack = 0;
+
+    for (let i = 0; i < attack.repeats; i++) {
+      let attackPoint = 0;
+      if (attack.advantage) {
+        let a = getRandomInt(20);
+        let b = getRandomInt(20);
+        attackPoint = Math.max(a, b);
+      } else if (attack.disadvantage) {
+        let a = getRandomInt(20);
+        let b = getRandomInt(20);
+        attackPoint = Math.min(a, b);
+      } else {
+        attackPoint = getRandomInt(20);
+      }
+
+      attackPoint += parseInt(attack.modifier);
+
+      if (attack.bless) {
+        attackPoint += getRandomInt(4);
+      } else if (attack.bane) {
+        attackPoint -= getRandomInt(4);
+      }
+
+      if (attackPoint >= attack.armour) {
+        newAttack.push(
+          <SuccessfulAttack index={i + 1} score={attackPoint} />
+        );
+        sum += parseInt(attackPoint);
+        successfulAttack += 1;
+      } else {
+        newAttack.push(
+          <Attack index={i + 1} score={attackPoint} />
+        );
+      }
+    }
+    newAttack.push(<div className="mt-2">number of succesful attacks: {successfulAttack}</div>);
+
+    setAttackList([newAttack]);
+
+    //damage
+    let total = 0;
+    let damageTypes = {
+      slashing: 0,
+      piercing: 0,
+      bludgeoning: 0,
+      cold: 0,
+      poison: 0,
+      acid: 0,
+      psychic: 0,
+      fire: 0,
+      necrotic: 0,
+      radiant: 0,
+      force: 0,
+      thunder: 0,
+      lightning: 0,
+    };
+
+    let newRepeats = damage.repeats * successfulAttack;
+    let hurt = 0;
+    let newDamage = [];
+    let index = 1;
+
+    for (let i = 0; i < newRepeats; i++) {
+      hurt = getRandomInt(damage.side);
+      hurt += parseInt(damage.modifier);
+
+      for (let d in damageTypes) {
+        if (d == damage.type) {
+          damageTypes[d] += hurt;
+          total += hurt;
+        }
+      }
+    }
+
+    for (let d in damageTypes) {
+      if (damageTypes[d] != 0) {
+        newDamage.push(
+          <Damage score={damageTypes[d]} damageType={d} />
+        );
+        index += 1;
+      }
+    }
+
+    setDamageList([newDamage])
+    setShowForm(false)
+  }
+
+  function redo() {
+    setShowForm(true)
+  }
+
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`min-h-screen items-center w-10/12 max-w-2xl m-auto justify-center align-center text-white flex`}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+      <div id="form">
+        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">DND Dice Roller 🎲</h1>
+
+        <div className="border w-full p-2 rounded mb-3">
+          <h2 className="font-bold text-xl sm:text-3xl pb-3">attack</h2>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-8">repeats </p>
+            <input
+              onChange={(e) =>
+                setAttack({ ...attack, repeats: e.target.value })
+              }
+              type="number"
+              name="repeats"
+              id="repeats"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            ></input>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-[26px]">modifier </p>
+            <input
+              onChange={(e) =>
+                setAttack({ ...attack, modifier: e.target.value })
+              }
+              type="number"
+              name="modifier"
+              id="modifier"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            ></input>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-4">armour class </p>
+            <input
+              onChange={(e) => setAttack({ ...attack, armour: e.target.value })}
+              type="number"
+              name="armour"
+              id="armour"
+              min="1"
+              max="20"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            ></input>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-2">advantage/disadvantage</p>
+            <select
+              onChange={(e) =>
+                setAttack({
+                  ...attack,
+                  advantage: e.target.value == "advantage",
+                  disadvantage: e.target.value == "disadvantage",
+                })
+              }
+              type="number"
+              name="ad-dis"
+              id="ad-dis"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            >
+              <option value="none">none</option>
+              <option value="advantage">advantage</option>
+              <option value="disadvantage">disadvantage</option>
+            </select>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-2">bless/bane</p>
+            <select
+              onChange={(e) =>
+                setAttack({
+                  ...attack,
+                  bless: e.target.value == "bless",
+                  bane: e.target.value == "bane",
+                })
+              }
+              type="number"
+              name="bless-bane"
+              id="bless-bane"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            >
+              <option value="none">none</option>
+              <option value="bless">bless</option>
+              <option value="bane">bane</option>
+            </select>
+          </div>
         </div>
+        <div className="border w-full p-2 rounded mb-3">
+          <h2 className="font-bold pb-3 text-xl sm:text-3xl">damage</h2>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-5">dice type </p>
+            <input
+              onChange={(e) =>
+                setDamage({ ...damage, repeats: e.target.value })
+              }
+              type="number"
+              name="d-repeats"
+              id="d-repeats"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-1/3 mr-1 pl-1"
+            ></input>
+            d
+            <input
+              onChange={(e) => setDamage({ ...damage, side: e.target.value })}
+              type="number"
+              name="d-side"
+              id="d-side"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-1/3 ml-1 pl-1"
+              required
+            ></input>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-7">modifier </p>
+            <input
+              onChange={(e) =>
+                setDamage({ ...damage, modifier: e.target.value })
+              }
+              type="number"
+              name="d-modifier"
+              id="d-modifier"
+              min="1"
+              max="100"
+              className="bg-transparent border rounded w-full pl-1"
+              required
+            ></input>
+          </div>
+          <div className="mb-2 flex">
+            <p className="font-bold mr-4">damage type </p>
+            <select
+              id="damageTypeSelect"
+              onChange={(e) => setDamage({ ...damage, type: e.target.value })}
+              className="bg-transparent border rounded w-full"
+            >
+              <option value="none">None</option>
+              <option value="slashing">Slashing</option>
+              <option value="piercing">Piercing</option>
+              <option value="bludgeoning">Bludgeoning</option>
+              <option value="cold">Cold</option>
+              <option value="poison">Poison</option>
+              <option value="acid">Acid</option>
+              <option value="psychic">Psychic</option>
+              <option value="fire">Fire</option>
+              <option value="necrotic">Necrotic</option>
+              <option value="radiant">Radiant</option>
+              <option value="force">Force</option>
+              <option value="thunder">Thunder</option>
+              <option value="lightning">Lightning</option>
+            </select>
+          </div>
+        </div>
+        <button className="text-black bg-white rounded p-2" onClick={calculate}>
+          calculate
+        </button>
       </div>
+      <div id="result">
+        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl mb-3">results</h1>
+        <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">attacks ⚔️</h2>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        {attackList.map((e, index) => (
+          <div key={index}>{e}</div>
+        ))}
+        <br />
+        <h2 className="text-2xl tracking-tight font-bold sm:text-3xl mb-3">damage ❤️‍🩹</h2>
+        {damageList.map((e, index) => (
+          <div key={index}>{e}</div>
+        ))}
+        <button className="text-black bg-white rounded p-2 mt-3" onClick={redo}>
+          redo
+        </button>
       </div>
     </main>
   );
